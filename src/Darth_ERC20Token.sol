@@ -18,7 +18,7 @@ contract Darth is
     ERC20Permit,
     ERC20Votes
 {
-    constructor() ERC20("Darth", "DAT") ERC20Permit("Darth") {
+    constructor() ERC20("Darth", "DART") ERC20Permit("Darth") {
         _mint(msg.sender, 2000000 * 10 ** decimals());
     }
 
