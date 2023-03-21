@@ -16,7 +16,11 @@ contract DarthNft is ERC721URIStorage{
     address public owner;
     mapping (address => bool) isWhitelisted;
     mapping (address => uint256) usersNft;
-    enum State {NOTSTARTED, STARTED, STOPPED}
+    enum State {
+        NOTSTARTED, 
+        STARTED, 
+        STOPPED
+    }
     State public presaleState;
     uint256 public expectedNftMinted;
     uint256 public totalNFTMinted;
@@ -25,54 +29,69 @@ contract DarthNft is ERC721URIStorage{
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-     constructor()ERC721('DarthNft', 'DTHNFT'){
+    constructor()ERC721('DarthNft', 'DTHNFT'){
         owner = msg.sender;
-        presaleState = State.NOTSTARTED;
         expectedNftMinted = 200;
         totalNFTMinted = 0;
-        nftPrice = 0.001 ether;
-     }
-     modifier onlyOwner(){
+        nftPrice = 0.01 ether;
+    }
+
+    modifier onlyOwner(){
         require(owner == msg.sender, "You are not the boss");
         _;
-     }
+    }
 
-     function mintNFT(address _to, string memory _tokenURI) external payable returns(uint256){
+    function mintNFT(address _to, string memory _tokenURI) external payable returns(uint256){
         require(_to != address(0), "Address doesn't exist");
         require(totalNFTMinted <=  expectedNftMinted, "Oops!! can't mint NFT");
          
         uint256 newTokenId;
+        uint256 userEthbalance;
         
         if(isWhitelisted[msg.sender]){
 
             require(presaleState == State.STARTED, "The presale has not started");
             // require(usersNft[msg.sender] <= 2, "You can't mint more that 2 times");
-            require(msg.value == nftPrice/2, "Ether value sent is not correct");
+            require(msg.value >= nftPrice/2, "Ether value sent is not correct");
+            userEthbalance = msg.value - (nftPrice/2);
 
             _tokenIds.increment();
              newTokenId = _tokenIds.current();
-            _mint(_to, newTokenId);
-            _setTokenURI(newTokenId, _tokenURI);
             totalNFTMinted ++;
             usersNft[msg.sender] ++;
+            _mint(_to, newTokenId);
+            _setTokenURI(newTokenId, _tokenURI);
+
+            payable(msg.sender).transfer(userEthbalance);
+
+            return newTokenId;
+
         }
         
-        require(msg.value == nftPrice, "Ether value sent is not correct");
-        _tokenIds.increment();
-         newTokenId = _tokenIds.current();
-        _mint(_to, newTokenId);
-        _setTokenURI(newTokenId, _tokenURI);
-        
-        return newTokenId;
-     }
+        require(msg.value >= nftPrice, "Ether value sent is not correct");
+        userEthbalance = msg.value - nftPrice;
+
+         _tokenIds.increment();
+             newTokenId = _tokenIds.current();
+            totalNFTMinted ++;
+            usersNft[msg.sender] ++;
+            _mint(_to, newTokenId);
+            _setTokenURI(newTokenId, _tokenURI);
+          
+            payable(msg.sender).transfer(userEthbalance);
+
+            return newTokenId;
+    }
 
     function ownerETHBalance() external onlyOwner view returns(uint256){
          return address(this).balance;
     }
+
     function addWhitelist(address _user) external onlyOwner(){
         require(_user != address(0),"Address doesn't exist" );
         isWhitelisted[msg.sender] = true;
     }
+
      function setState (State _state) external onlyOwner {
         presaleState = _state;
      }
