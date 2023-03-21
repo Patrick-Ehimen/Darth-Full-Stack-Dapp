@@ -28,11 +28,11 @@ contract DarthNft is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    constructor() ERC721("DarthNft", "DTHNFT") {
+    constructor() ERC721("DarthNft", "DART") {
         owner = msg.sender;
         expectedNftMinted = 200;
         totalNFTMinted = 0;
-        nftPrice = 0.001 ether;
+        nftPrice = 0.1 ether;
     }
 
     modifier onlyOwner() {
