@@ -1,3 +1,5 @@
+#installed file
+/node_modules
 # Compiler files
 cache/
 out/
