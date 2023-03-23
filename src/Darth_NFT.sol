@@ -30,7 +30,7 @@ contract DarthNft is ERC721URIStorage {
 
     constructor() ERC721("DarthNft", "DART") {
         owner = msg.sender;
-        expectedNftMinted = 200;
+        expectedNftMinted = 2000;
         totalNFTMinted = 0;
         nftPrice = 0.1 ether;
     }
@@ -90,10 +90,16 @@ contract DarthNft is ERC721URIStorage {
         presaleState = _state;
     }
 
+    // Add the value to the expected value of NFTs minted. This function is called
+    // when a user purchases an NFT from the marketplace.
+
     function changeExpectedNftMinted(uint256 _value) external onlyOwner {
         expectedNftMinted += _value;
     }
 
+    // This function changes the price of the NFTs the presale
+    // It can only be called by the owner of the contract
+    // It can only be called if the presale hasn't started yet
     function changePrice(uint256 _price) external onlyOwner {
         require(
             presaleState != State.STARTED,
