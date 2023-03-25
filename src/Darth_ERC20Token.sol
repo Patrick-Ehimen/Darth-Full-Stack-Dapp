@@ -47,7 +47,6 @@ contract Darth is
     }
 
     // The following functions are overrides required by Solidity.
-
     function _afterTokenTransfer(
         address from,
         address to,
