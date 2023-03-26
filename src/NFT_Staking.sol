@@ -11,11 +11,14 @@ contract DarthStaking {
     uint256 public minStakingPeriod = 2 days;
 
     struct Stake {
-        uint256 tokenId;
+        uint256 nftTokenId;
         uint startTime;
     }
 
+    Stake public stakes;
+
     mapping(address => uint256) public stakedNFTs;
+    //mapping(address => Stake) public userStake;
 
     event Staked(address indexed staker, uint nftId);
     event Unstaked(address indexed staker, uint nftId);
@@ -26,24 +29,6 @@ contract DarthStaking {
         rewardAmount = _rewardAmount;
     }
 
-    // function stake(uint256 _tokenId) external {
-    //     require(
-    //         nft.ownerOf(_tokenId) == msg.sender,
-    //         "Must be owner of NFT to stake"
-    //     );
-    //     nft.transferFrom(msg.sender, address(this), _tokenId);
-    //     //stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp);
-    //     //rewardToken.transfer(msg.sender, rewardAmount);
-    //     emit Staked(msg.sender, _tokenId);
-    // }
-
-    // function unstake() external {
-    //     uint256 tokenId = stakedNFTs[msg.sender];
-    //     require(tokenId != 0, "No NFT staked");
-    //     nft.transferFrom(address(this), msg.sender, tokenId);
-    //     stakedNFTs[msg.sender] = 0;
-    //     emit Unstaked(msg.sender, tokenId);
-    // }
     function stake(uint256 _tokenId) external {
         require(
             nft.ownerOf(_tokenId) == msg.sender,
@@ -51,21 +36,24 @@ contract DarthStaking {
         );
         nft.transferFrom(msg.sender, address(this), _tokenId);
         stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp);
+
         emit Staked(msg.sender, _tokenId);
     }
 
-    function unstake() external {
+    function unStake() external {
         Stake memory userStake = stakedNFTs[msg.sender];
-        require(userStake.tokenId != 0, "No NFT staked");
+        require(userStake.nftTokenId != 0, "No NFT staked");
         require(
             block.timestamp >= userStake.startTime + minStakingPeriod,
             "Minimum staking period not met"
         );
-        nft.transferFrom(address(this), msg.sender, userStake.tokenId);
+        nft.transferFrom(address(this), msg.sender, userStake.nftTokenId);
         uint256 reward = calculateReward(userStake.startTime);
         rewardToken.transfer(msg.sender, reward);
+
         delete stakedNFTs[msg.sender];
-        emit Unstaked(msg.sender, userStake.tokenId);
+
+        emit Unstaked(msg.sender, userStake.nftTokenId);
     }
 
     function calculateReward(
