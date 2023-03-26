@@ -17,7 +17,7 @@ contract DarthStaking {
 
     Stake public stakes;
 
-    mapping(address => uint256) public stakedNFTs;
+    mapping(address => Stake) public stakedNFTs;
     //mapping(address => Stake) public userStake;
 
     event Staked(address indexed staker, uint nftId);
