@@ -26,22 +26,52 @@ contract DarthStaking {
         rewardAmount = _rewardAmount;
     }
 
+    // function stake(uint256 _tokenId) external {
+    //     require(
+    //         nft.ownerOf(_tokenId) == msg.sender,
+    //         "Must be owner of NFT to stake"
+    //     );
+    //     nft.transferFrom(msg.sender, address(this), _tokenId);
+    //     //stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp);
+    //     //rewardToken.transfer(msg.sender, rewardAmount);
+    //     emit Staked(msg.sender, _tokenId);
+    // }
+
+    // function unstake() external {
+    //     uint256 tokenId = stakedNFTs[msg.sender];
+    //     require(tokenId != 0, "No NFT staked");
+    //     nft.transferFrom(address(this), msg.sender, tokenId);
+    //     stakedNFTs[msg.sender] = 0;
+    //     emit Unstaked(msg.sender, tokenId);
+    // }
     function stake(uint256 _tokenId) external {
         require(
             nft.ownerOf(_tokenId) == msg.sender,
             "Must be owner of NFT to stake"
         );
         nft.transferFrom(msg.sender, address(this), _tokenId);
-        //stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp);
-        //rewardToken.transfer(msg.sender, rewardAmount);
+        stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp);
         emit Staked(msg.sender, _tokenId);
     }
 
     function unstake() external {
-        uint256 tokenId = stakedNFTs[msg.sender];
-        require(tokenId != 0, "No NFT staked");
-        nft.transferFrom(address(this), msg.sender, tokenId);
-        stakedNFTs[msg.sender] = 0;
-        emit Unstaked(msg.sender, tokenId);
+        Stake memory userStake = stakedNFTs[msg.sender];
+        require(userStake.tokenId != 0, "No NFT staked");
+        require(
+            block.timestamp >= userStake.startTime + minStakingPeriod,
+            "Minimum staking period not met"
+        );
+        nft.transferFrom(address(this), msg.sender, userStake.tokenId);
+        uint256 reward = calculateReward(userStake.startTime);
+        rewardToken.transfer(msg.sender, reward);
+        delete stakedNFTs[msg.sender];
+        emit Unstaked(msg.sender, userStake.tokenId);
+    }
+
+    function calculateReward(
+        uint256 _startTime
+    ) internal view returns (uint256) {
+        uint256 timeStaked = block.timestamp - _startTime;
+        return (timeStaked * rewardAmount) / 1 days;
     }
 }
