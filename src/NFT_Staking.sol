@@ -35,13 +35,13 @@ contract DarthStaking {
             "Must be owner of NFT to stake"
         );
         nft.transferFrom(msg.sender, address(this), _tokenId);
-        stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp);
+        stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp); //@ bug to be fixed.....
 
         emit Staked(msg.sender, _tokenId);
     }
 
     function unStake() external {
-        Stake memory userStake = stakedNFTs[msg.sender];
+        Stake memory userStake = stakedNFTs[msg.sender]; //@ bug to be fixed
         require(userStake.nftTokenId != 0, "No NFT staked");
         require(
             block.timestamp >= userStake.startTime + minStakingPeriod,
