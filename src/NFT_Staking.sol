@@ -8,11 +8,16 @@ contract DarthStaking {
     IERC721 public nft;
     IERC20 public rewardToken;
     uint256 public rewardAmount;
+    uint256 public minStakingPeriod = 2 days;
+
+    struct Stake {
+        uint256 tokenId;
+        uint startTime;
+    }
 
     mapping(address => uint256) public stakedNFTs;
 
     event Staked(address indexed staker, uint nftId);
-
     event Unstaked(address indexed staker, uint nftId);
 
     constructor(address _nft, address _rewardToken, uint256 _rewardAmount) {
@@ -27,8 +32,8 @@ contract DarthStaking {
             "Must be owner of NFT to stake"
         );
         nft.transferFrom(msg.sender, address(this), _tokenId);
-        stakedNFTs[msg.sender] = _tokenId;
-        rewardToken.transfer(msg.sender, rewardAmount);
+        //stakedNFTs[msg.sender] = Stake(_tokenId, block.timestamp);
+        //rewardToken.transfer(msg.sender, rewardAmount);
         emit Staked(msg.sender, _tokenId);
     }
 
