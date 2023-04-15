@@ -16,7 +16,7 @@ contract DarthStablecoin is IERC20{
     string public name;
     uint public decimals;
     mapping(address => uint) public balances;
-    mapping  (address => uint) public allowances;
+    mapping  (address => mapping (address => uint)) public allowances;
     mapping (address => bool) public blacklist;
 
     event blacklistUser(address indexed user);
@@ -39,9 +39,15 @@ contract DarthStablecoin is IERC20{
         _;
     }
 
-    function balanceOf(address _address) external validAddress(_address) override view returns(uint){}
-    function allowance(address _spender, address _owner) external validAddress (_spender) override view returns(uint){}
-    function approve(address _spender, uint _amount) external validAddress( _spender) override returns(bool){}
+    function balanceOf(address _address) external validAddress(_address) override view returns(uint){
+        return balances[_address]; 
+    }
+    function allowance(address _spender, address _owner) external validAddress (_spender) override view returns(uint){
+        return allowances[_owner][_spender];
+    }
+    function approve(address _spender, uint _amount) external validAddress( _spender) override returns(bool){
+        allowances[msg.sender][_spender] = _amount;
+    }
     function transfer(address _to, uint _amount) external validAddress(_to) override returns(bool){}
     function transferFrom(address _to, address _from, uint _amount) external  validAddress(_to) override returns(bool){}
 
