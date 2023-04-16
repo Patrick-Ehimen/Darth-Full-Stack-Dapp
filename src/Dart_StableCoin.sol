@@ -17,11 +17,17 @@ contract DarthStablecoin is IERC20{
     uint public decimals;
     mapping(address => uint) public balances;
     mapping  (address => mapping (address => uint)) public allowances;
+    
     mapping (address => bool) public blacklist;
+
+    bool public paused = false;
+
 
     event blacklistUser(address indexed user);
     event unBlacklistUser(address indexed user);
     event IssueToken(address indexed user, uint indexed amount);
+    event Pause();
+    event UnPaused();
 
     error InsufficentToken();
     error IsBlackListed();
@@ -34,7 +40,7 @@ contract DarthStablecoin is IERC20{
     }
 
     modifier onlyOwner() {
-        require(owner == msg.sender);
+        require(owner == msg.sender, "Not Admin");
         _;
     }
 
@@ -43,17 +49,22 @@ contract DarthStablecoin is IERC20{
         _;
     }
 
-    function balanceOf(address _address) external validAddress(_address) override view returns(uint){
+    modifier whenNotpaused(){
+        require(!paused, "Contract Is Paused");
+        _;
+    }
+
+    function balanceOf(address _address) external validAddress(_address) whenNotpaused override view returns(uint){
         return balances[_address]; 
     }
-    function allowance(address _spender, address _owner) external validAddress (_spender) override view returns(uint){
+    function allowance(address _spender, address _owner) external validAddress (_spender) whenNotpaused override view returns(uint){
         return allowances[_owner][_spender];
     }
-    function approve(address _spender, uint _amount) external validAddress( _spender) override returns(bool){
+    function approve(address _spender, uint _amount) external validAddress( _spender) whenNotpaused override returns(bool){
         allowances[msg.sender][_spender] = _amount;
         return true;
     }
-    function transfer(address _to, uint _amount) external validAddress(_to) override returns(bool){
+    function transfer(address _to, uint _amount) external validAddress(_to) whenNotpaused override returns(bool){
         if(blacklist[_to] == true){
             revert IsBlackListed();
         }
@@ -66,7 +77,7 @@ contract DarthStablecoin is IERC20{
         return true;
          
     }
-    function transferFrom(address _to, address _from, uint _amount) external  validAddress(_to) override returns(bool){
+    function transferFrom(address _to, address _from, uint _amount) external  validAddress(_to) whenNotpaused override returns(bool){
         if(blacklist[_to] == true){
             revert IsBlackListed();
         }
@@ -103,6 +114,16 @@ contract DarthStablecoin is IERC20{
         totalSupply -= _amount;
 
         emit IssueToken( _recipient, _amount);
+    }
+
+    function pause() external onlyOwner {
+        paused = true;
+        emit Pause();
+    }
+
+     function unpause() external onlyOwner {
+        paused = false;
+        emit UnPaused();
     }
 
 
