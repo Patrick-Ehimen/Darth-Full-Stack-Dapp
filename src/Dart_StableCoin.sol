@@ -16,11 +16,15 @@ contract DarthStablecoin is IERC20{
     string public name;
     uint public decimals;
     mapping(address => uint) public balances;
-    mapping  (address => uint) public allowances;
+    mapping  (address => mapping (address => uint)) public allowances;
     mapping (address => bool) public blacklist;
 
     event blacklistUser(address indexed user);
     event unBlacklistUser(address indexed user);
+    event IssueToken(address indexed user, uint indexed amount);
+
+    error InsufficentToken();
+    error IsBlackListed();
 
     constructor(uint _supply, uint _decimals, string memory _name){
         owner = msg.sender;
@@ -39,20 +43,67 @@ contract DarthStablecoin is IERC20{
         _;
     }
 
-    function balanceOf(address _address) external validAddress(_address) override view returns(uint){}
-    function allowance(address _spender, address _owner) external validAddress (_spender) override view returns(uint){}
-    function approve(address _spender, uint _amount) external validAddress( _spender) override returns(bool){}
-    function transfer(address _to, uint _amount) external validAddress(_to) override returns(bool){}
-    function transferFrom(address _to, address _from, uint _amount) external  validAddress(_to) override returns(bool){}
+    function balanceOf(address _address) external validAddress(_address) override view returns(uint){
+        return balances[_address]; 
+    }
+    function allowance(address _spender, address _owner) external validAddress (_spender) override view returns(uint){
+        return allowances[_owner][_spender];
+    }
+    function approve(address _spender, uint _amount) external validAddress( _spender) override returns(bool){
+        allowances[msg.sender][_spender] = _amount;
+        return true;
+    }
+    function transfer(address _to, uint _amount) external validAddress(_to) override returns(bool){
+        if(blacklist[_to] == true){
+            revert IsBlackListed();
+        }
+        if(balances[msg.sender] >= _amount){
+            revert InsufficentToken();
+        }
+        balances[_to] += _amount;
+        balances[msg.sender] -= _amount;
 
-    function blacklistAddress(address _user) external  validAddress( _user) onlyOwner {}
+        return true;
+         
+    }
+    function transferFrom(address _to, address _from, uint _amount) external  validAddress(_to) override returns(bool){
+        if(blacklist[_to] == true){
+            revert IsBlackListed();
+        }
+        if(allowances[_from][msg.sender] >= _amount){
+            revert InsufficentToken();
+        }
+        balances[_to] += _amount;
+        allowances[_from][msg.sender] -= _amount;
+        balances[_from] -= _amount;
+
+        return true;
+    }
+
+    function blacklistAddress(address _user) external  validAddress( _user) onlyOwner {
+        blacklist[_user] = true;
+    }
     
-    function unBlacklistAddress(address _user) external validAddress( _user)  onlyOwner {}
+    function unBlacklistAddress(address _user) external validAddress( _user)  onlyOwner {
+        blacklist[_user] = false;
+    }
 
-    function issue() external onlyOwner {}
-    function redeem() external onlyOwner {}
+    function issue(address _recipient, uint _amount) external validAddress(_recipient) onlyOwner {
+        balances[_recipient] += _amount;
+        totalSupply += _amount;
 
+        emit IssueToken( _recipient, _amount);
 
-    
+    }
+    function redeem(address _recipient, uint _amount) external onlyOwner {
+        if(balances[_recipient] < _amount){
+            revert InsufficentToken();
+        }
+        balances[_recipient] -= _amount;
+        totalSupply -= _amount;
+
+        emit IssueToken( _recipient, _amount);
+    }
+
 
 }
